@@ -1,34 +1,24 @@
-import * as React from "react";
-import { ChatClient, ClientState } from "meetup-chat-client";
-import memoizeOne from "memoize-one";
-import { Subscription } from "rxjs";
+import React from "react";
 
-export class ChatDataSource extends React.PureComponent<{
-  onChange: () => ClientState;
-  serverUrl: string;
-}> {
-  subscribe = memoizeOne((onChange: () => ClientState, serverUrl: string) =>
-    ChatClient.connect(serverUrl).stateChanges.subscribe(onChange)
-  );
+import { ChatDataSource } from "./ChatDataSource";
+import { shallow, mount } from "enzyme";
 
-  subscription: Subscription | undefined;
+describe("<ChatDataSource />", () => {
+  const serverUrl = "http://localhost:35558";
 
-  getSnapshotBeforeUpdate() {
-    const subscription = this.subscribe(
-      this.props.onChange,
-      this.props.serverUrl
+  it("should connect and call onChange", done => {
+    const onChange = jest.fn();
+    const foo = mount(
+      <ChatDataSource serverUrl={serverUrl} onChange={onChange} />
     );
-    if (this.subscription !== subscription) {
-      this.unsubscribe();
-      this.subscription = subscription;
-    }
-  }
 
-  private unsubscribe() {
-    if (this.subscription) this.subscription.unsubscribe();
-  }
-
-  componentWillUnmount() {
-    this.unsubscribe();
-  }
-}
+    setTimeout(() => {
+      expect(onChange).toBeCalledTimes(2);
+      expect(onChange).toHaveBeenLastCalledWith({
+        socket: { isConnected: true, isConnecting: false },
+        chat: { isAuthenticated: false }
+      });
+      done();
+    }, 4000);
+  });
+});

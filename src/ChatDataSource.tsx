@@ -7,13 +7,17 @@ export class ChatDataSource extends React.PureComponent<{
   onChange: () => ClientState;
   serverUrl: string;
 }> {
-  subscribe = memoizeOne((onChange: () => ClientState, serverUrl: string) =>
-    ChatClient.connect(serverUrl).stateChanges.subscribe(onChange)
+  subscribe = memoizeOne(
+    (onChange: () => ClientState, serverUrl: string) => {
+      
+      return ChatClient.connect(serverUrl).stateChanges.subscribe(onChange);
+    }
+      
   );
 
   subscription: Subscription | undefined;
 
-  getSnapshotBeforeUpdate() {
+  render() {
     const subscription = this.subscribe(
       this.props.onChange,
       this.props.serverUrl
@@ -22,6 +26,8 @@ export class ChatDataSource extends React.PureComponent<{
       this.unsubscribe();
       this.subscription = subscription;
     }
+
+    return null;
   }
 
   private unsubscribe() {

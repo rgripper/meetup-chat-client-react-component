@@ -57,8 +57,8 @@ module.exports = {
   // A set of global variables that need to be available in all test environments
   globals: {
     "ts-jest": {
-      "tsConfigFile": "tsconfig.jest.json",
-      "skipBabel": true
+      "tsConfigFile": "config/tsconfig.jest.json",
+      "skipBabel": false,
     }
   },
 
@@ -108,11 +108,11 @@ module.exports = {
   // restoreMocks: false,
 
   // The root directory that Jest should scan for tests and modules within
-  // rootDir: null,
+  rootDir: "..",
 
   // A list of paths to directories that Jest should use to search for files in
   roots: [
-    "<rootDir>"
+    "<rootDir>",
   ],
 
   // Allows you to use a custom runner instead of Jest's default test runner
@@ -122,13 +122,13 @@ module.exports = {
   // setupFiles: [],
 
   // The path to a module that runs some code to configure or set up the testing framework before each test
-  // setupTestFrameworkScriptFile: null,
+  setupTestFrameworkScriptFile: "<rootDir>/config/setupTests.js",
 
   // A list of paths to snapshot serializer modules Jest should use for snapshot testing
   // snapshotSerializers: [],
 
   // The test environment that will be used for testing
-  testEnvironment: "node",
+  testEnvironment: "jsdom",
 
   // Options that will be passed to the testEnvironment
   // testEnvironmentOptions: {},

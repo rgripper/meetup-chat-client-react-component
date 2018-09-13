@@ -8,9 +8,10 @@
     "outDir": "./dist",
     "jsx": "react",
     "target": "es5",
-    "strict": true
+    "strict": true,
+    "esModuleInterop": true
   },
   "include": [
-    "src/index.ts"
+    "src/index.ts",
   ]
 }
