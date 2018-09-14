@@ -19,6 +19,20 @@ describe("<ChatDataSource />", () => {
         chat: { isAuthenticated: false }
       });
       done();
-    }, 4000);
+    }, 2000);
+  });
+
+  it("should login and call onChange", done => {
+    const onChange = jest.fn();
+    const userName = "Harry";
+    const foo = mount(
+      <ChatDataSource serverUrl={serverUrl} onChange={onChange} userName={userName} />
+    );
+
+    setTimeout(() => {
+      expect(onChange).toBeCalledTimes(4);
+      expect(onChange.mock.calls[3][0].chat.users.some(u => u.name === userName)).toBeTruthy()
+      done();
+    }, 2000);
   });
 });

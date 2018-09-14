@@ -3,38 +3,67 @@ import { ChatClient, ClientState } from "meetup-chat-client";
 import memoizeOne from "memoize-one";
 import { Subscription } from "rxjs";
 
-export class ChatDataSource extends React.PureComponent<{
-  onChange: () => ClientState;
-  serverUrl: string;
-}> {
-  subscribe = memoizeOne(
-    (onChange: () => ClientState, serverUrl: string) => {
-      
-      return ChatClient.connect(serverUrl).stateChanges.subscribe(onChange);
-    }
-      
-  );
+interface Props {
+  onChange?: () => ClientState;
+  serverUrl?: string;
+  userName?: string;
+}
 
-  subscription: Subscription | undefined;
+interface State extends Props {
+  chatClient?: ChatClient;
+  subscription?: Subscription;
+}
+
+export class ChatDataSource extends React.PureComponent<Props, State> {
+
+  state: State = {};
+
+  static getDerivedStateFromProps(
+    nextProps: Props,
+    prevState: State
+  ): Partial<State> | null {
+    const nextState = { ...prevState, ...nextProps };
+
+    if (nextProps.serverUrl !== prevState.serverUrl) {
+      if (prevState.chatClient) {
+        prevState.chatClient.disconnect();
+      }
+
+      if (nextProps.serverUrl) {
+        nextState.chatClient = ChatClient.connect(nextProps.serverUrl);
+      }
+    }
+
+    if (nextProps.onChange !== prevState.onChange) {
+      if (prevState.subscription) {
+        prevState.subscription.unsubscribe();
+      }
+
+      if (nextProps.onChange && nextState.chatClient) {
+        nextState.subscription = nextState.chatClient.stateChanges.subscribe(
+          nextProps.onChange
+        );
+      }
+    }
+
+    if (nextProps.userName !== prevState.userName && nextState.chatClient) {
+      if (prevState.userName) {
+        nextState.chatClient.logout();
+      }
+
+      if (nextProps.userName) {
+        nextState.chatClient.tryLogin(nextProps.userName);
+      }
+    }
+
+    return nextState;
+  }
 
   render() {
-    const subscription = this.subscribe(
-      this.props.onChange,
-      this.props.serverUrl
-    );
-    if (this.subscription !== subscription) {
-      this.unsubscribe();
-      this.subscription = subscription;
-    }
-
     return null;
   }
 
-  private unsubscribe() {
-    if (this.subscription) this.subscription.unsubscribe();
-  }
-
   componentWillUnmount() {
-    this.unsubscribe();
+    if (this.state.subscription) this.state.subscription.unsubscribe();
   }
 }
