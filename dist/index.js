@@ -68,14 +68,6 @@ var ChatDataSource = /** @class */ (function (_super) {
                 nextState.subscription = nextState.chatClient.stateChanges.subscribe(nextState.handleChange);
             }
         }
-        if (nextProps.onChange !== prevState.onChange) {
-            if (prevState.subscription) {
-                prevState.subscription.unsubscribe();
-            }
-            if (nextProps.onChange && nextState.chatClient) {
-                nextState.subscription = nextState.chatClient.stateChanges.subscribe(nextProps.onChange);
-            }
-        }
         if (nextProps.userName !== prevState.userName && nextState.chatClient) {
             if (prevState.userName) {
                 nextState.chatClient.logout();
