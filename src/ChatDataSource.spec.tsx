@@ -25,13 +25,23 @@ describe("<ChatDataSource />", () => {
   it("should login and call onChange", done => {
     const onChange = jest.fn();
     const userName = "Harry";
-    const foo = mount(
-      <ChatDataSource serverUrl={serverUrl} onChange={onChange} userName={userName} />
+    shallow(
+      <ChatDataSource
+        serverUrl={serverUrl}
+        onChange={onChange}
+        userName={userName}
+      />
     );
 
     setTimeout(() => {
       expect(onChange).toBeCalledTimes(4);
-      expect(onChange.mock.calls.some(args => args[0].chat.users && args[0].chat.users.some(u => u.name === userName))).toBeTruthy()
+      expect(
+        onChange.mock.calls.some(
+          args =>
+            args[0].chat.users &&
+            args[0].chat.users.some(u => u.name === userName)
+        )
+      ).toBeTruthy();
       done();
     }, 2000);
   });
