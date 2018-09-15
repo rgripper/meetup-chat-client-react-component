@@ -1,11 +1,12 @@
 import typescriptPlugin from 'rollup-plugin-typescript2'
 import typescript from 'typescript'
-import pkg from './package.json'
+import pkg from '../package.json'
+import path from 'path'
 
 export default {
-  input: 'src/index.ts',
+  input: path.resolve('src/index.ts'),
   output: [{
-    file: pkg.main,
+    file: path.resolve(pkg.main),
     format: 'es',
   }],
   external: [

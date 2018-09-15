@@ -4,7 +4,7 @@ import memoizeOne from "memoize-one";
 import { Subscription } from "rxjs";
 
 interface Props {
-  onChange?: () => ClientState;
+  onChange?: (state: ClientState) => any;
   serverUrl?: string;
   userName?: string;
 }
@@ -12,11 +12,17 @@ interface Props {
 interface State extends Props {
   chatClient?: ChatClient;
   subscription?: Subscription;
+  handleChange: (state: ClientState) => any;
 }
 
 export class ChatDataSource extends React.PureComponent<Props, State> {
-
-  state: State = {};
+  state: State = {
+    handleChange: (state: ClientState) => {
+      if (this.props.onChange) {
+        this.props.onChange(state);
+      }
+    }
+  };
 
   static getDerivedStateFromProps(
     nextProps: Props,
@@ -29,19 +35,14 @@ export class ChatDataSource extends React.PureComponent<Props, State> {
         prevState.chatClient.disconnect();
       }
 
-      if (nextProps.serverUrl) {
-        nextState.chatClient = ChatClient.connect(nextProps.serverUrl);
-      }
-    }
-
-    if (nextProps.onChange !== prevState.onChange) {
       if (prevState.subscription) {
         prevState.subscription.unsubscribe();
       }
 
-      if (nextProps.onChange && nextState.chatClient) {
+      if (nextProps.serverUrl) {
+        nextState.chatClient = ChatClient.connect(nextProps.serverUrl);
         nextState.subscription = nextState.chatClient.stateChanges.subscribe(
-          nextProps.onChange
+          nextState.handleChange
         );
       }
     }
@@ -64,6 +65,12 @@ export class ChatDataSource extends React.PureComponent<Props, State> {
   }
 
   componentWillUnmount() {
-    if (this.state.subscription) this.state.subscription.unsubscribe();
+    if (this.state.chatClient) {
+      this.state.chatClient.disconnect();
+    }
+
+    if (this.state.subscription) {
+      this.state.subscription.unsubscribe();
+    }
   }
 }

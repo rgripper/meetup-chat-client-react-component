@@ -1,13 +1,20 @@
 import * as React from "react";
-import { ClientState } from "meetup-chat-client";
+import { ChatClient, ClientState } from "meetup-chat-client";
 import { Subscription } from "rxjs";
-export declare class ChatDataSource extends React.PureComponent<{
-    onChange: () => ClientState;
-    serverUrl: string;
-}> {
-    subscribe: (onChange: () => ClientState, serverUrl: string) => Subscription;
-    subscription: Subscription | undefined;
-    getSnapshotBeforeUpdate(): void;
-    private unsubscribe;
+interface Props {
+    onChange?: (state: ClientState) => any;
+    serverUrl?: string;
+    userName?: string;
+}
+interface State extends Props {
+    chatClient?: ChatClient;
+    subscription?: Subscription;
+    handleChange: (state: ClientState) => any;
+}
+export declare class ChatDataSource extends React.PureComponent<Props, State> {
+    state: State;
+    static getDerivedStateFromProps(nextProps: Props, prevState: State): Partial<State> | null;
+    render(): null;
     componentWillUnmount(): void;
 }
+export {};

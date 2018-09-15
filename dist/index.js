@@ -1,6 +1,5 @@
 import { PureComponent } from 'react';
 import { ChatClient } from 'meetup-chat-client';
-import memoizeOne from 'memoize-one';
 
 /*! *****************************************************************************
 Copyright (c) Microsoft Corporation. All rights reserved.
@@ -31,28 +30,72 @@ function __extends(d, b) {
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 }
 
+var __assign = function() {
+    __assign = Object.assign || function __assign(t) {
+        for (var s, i = 1, n = arguments.length; i < n; i++) {
+            s = arguments[i];
+            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p)) t[p] = s[p];
+        }
+        return t;
+    };
+    return __assign.apply(this, arguments);
+};
+
 var ChatDataSource = /** @class */ (function (_super) {
     __extends(ChatDataSource, _super);
     function ChatDataSource() {
         var _this = _super !== null && _super.apply(this, arguments) || this;
-        _this.subscribe = memoizeOne(function (onChange, serverUrl) {
-            return ChatClient.connect(serverUrl).stateChanges.subscribe(onChange);
-        });
+        _this.state = {
+            handleChange: function (state) {
+                if (_this.props.onChange) {
+                    _this.props.onChange(state);
+                }
+            }
+        };
         return _this;
     }
-    ChatDataSource.prototype.getSnapshotBeforeUpdate = function () {
-        var subscription = this.subscribe(this.props.onChange, this.props.serverUrl);
-        if (this.subscription !== subscription) {
-            this.unsubscribe();
-            this.subscription = subscription;
+    ChatDataSource.getDerivedStateFromProps = function (nextProps, prevState) {
+        var nextState = __assign({}, prevState, nextProps);
+        if (nextProps.serverUrl !== prevState.serverUrl) {
+            if (prevState.chatClient) {
+                prevState.chatClient.disconnect();
+            }
+            if (prevState.subscription) {
+                prevState.subscription.unsubscribe();
+            }
+            if (nextProps.serverUrl) {
+                nextState.chatClient = ChatClient.connect(nextProps.serverUrl);
+                nextState.subscription = nextState.chatClient.stateChanges.subscribe(nextState.handleChange);
+            }
         }
+        if (nextProps.onChange !== prevState.onChange) {
+            if (prevState.subscription) {
+                prevState.subscription.unsubscribe();
+            }
+            if (nextProps.onChange && nextState.chatClient) {
+                nextState.subscription = nextState.chatClient.stateChanges.subscribe(nextProps.onChange);
+            }
+        }
+        if (nextProps.userName !== prevState.userName && nextState.chatClient) {
+            if (prevState.userName) {
+                nextState.chatClient.logout();
+            }
+            if (nextProps.userName) {
+                nextState.chatClient.tryLogin(nextProps.userName);
+            }
+        }
+        return nextState;
     };
-    ChatDataSource.prototype.unsubscribe = function () {
-        if (this.subscription)
-            this.subscription.unsubscribe();
+    ChatDataSource.prototype.render = function () {
+        return null;
     };
     ChatDataSource.prototype.componentWillUnmount = function () {
-        this.unsubscribe();
+        if (this.state.chatClient) {
+            this.state.chatClient.disconnect();
+        }
+        if (this.state.subscription) {
+            this.state.subscription.unsubscribe();
+        }
     };
     return ChatDataSource;
 }(PureComponent));

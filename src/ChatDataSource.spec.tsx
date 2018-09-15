@@ -31,7 +31,7 @@ describe("<ChatDataSource />", () => {
 
     setTimeout(() => {
       expect(onChange).toBeCalledTimes(4);
-      expect(onChange.mock.calls[3][0].chat.users.some(u => u.name === userName)).toBeTruthy()
+      expect(onChange.mock.calls.some(args => args[0].chat.users && args[0].chat.users.some(u => u.name === userName))).toBeTruthy()
       done();
     }, 2000);
   });
