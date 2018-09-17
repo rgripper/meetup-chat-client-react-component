@@ -41,14 +41,26 @@ var __assign = function() {
     return __assign.apply(this, arguments);
 };
 
+var connectAndSubscribe = function (serverUrl, handleChange) {
+    var chatClient = ChatClient.connect(serverUrl);
+    var subscription = chatClient.stateChanges.subscribe(handleChange);
+    return {
+        chatClient: chatClient,
+        subscription: subscription
+    };
+};
+var disconnectAndUnsubscribe = function (clientAndSubscription) {
+    clientAndSubscription.chatClient.disconnect();
+    clientAndSubscription.subscription.unsubscribe();
+};
 var ChatDataSource = /** @class */ (function (_super) {
     __extends(ChatDataSource, _super);
     function ChatDataSource() {
         var _this = _super !== null && _super.apply(this, arguments) || this;
         _this.state = {
-            handleChange: function (state) {
-                if (_this.props.onChange) {
-                    _this.props.onChange(state);
+            handleChange: function (clientState) {
+                if (_this.props.render && _this.state.clientAndSubscription) {
+                    _this.setState({ clientState: clientState });
                 }
             }
         };
@@ -57,36 +69,25 @@ var ChatDataSource = /** @class */ (function (_super) {
     ChatDataSource.getDerivedStateFromProps = function (nextProps, prevState) {
         var nextState = __assign({}, prevState, nextProps);
         if (nextProps.serverUrl !== prevState.serverUrl) {
-            if (prevState.chatClient) {
-                prevState.chatClient.disconnect();
-            }
-            if (prevState.subscription) {
-                prevState.subscription.unsubscribe();
+            if (prevState.clientAndSubscription) {
+                disconnectAndUnsubscribe(prevState.clientAndSubscription);
             }
             if (nextProps.serverUrl) {
-                nextState.chatClient = ChatClient.connect(nextProps.serverUrl);
-                nextState.subscription = nextState.chatClient.stateChanges.subscribe(nextState.handleChange);
-            }
-        }
-        if (nextProps.userName !== prevState.userName && nextState.chatClient) {
-            if (prevState.userName) {
-                nextState.chatClient.logout();
-            }
-            if (nextProps.userName) {
-                nextState.chatClient.tryLogin(nextProps.userName);
+                nextState.clientAndSubscription = connectAndSubscribe(nextProps.serverUrl, nextState.handleChange);
             }
         }
         return nextState;
     };
     ChatDataSource.prototype.render = function () {
-        return null;
+        var cc = this.state.clientAndSubscription;
+        var result = this.props.render && this.state.clientState && cc
+            ? this.props.render(this.state.clientState, function (x) { return cc.chatClient.tryLogin(x); }, function (x) { return cc.chatClient.sendText(x); })
+            : null;
+        return result;
     };
     ChatDataSource.prototype.componentWillUnmount = function () {
-        if (this.state.chatClient) {
-            this.state.chatClient.disconnect();
-        }
-        if (this.state.subscription) {
-            this.state.subscription.unsubscribe();
+        if (this.state.clientAndSubscription) {
+            disconnectAndUnsubscribe(this.state.clientAndSubscription);
         }
     };
     return ChatDataSource;

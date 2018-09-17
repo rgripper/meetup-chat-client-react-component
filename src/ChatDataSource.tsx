@@ -1,25 +1,51 @@
 import * as React from "react";
 import { ChatClient, ClientState } from "meetup-chat-client";
-import memoizeOne from "memoize-one";
 import { Subscription } from "rxjs";
 
-interface Props {
-  onChange?: (state: ClientState) => any;
-  serverUrl?: string;
-  userName?: string;
+interface ClientAndSubscription {
+  chatClient: ChatClient;
+  subscription: Subscription;
 }
 
-interface State extends Props {
-  chatClient?: ChatClient;
-  subscription?: Subscription;
-  handleChange: (state: ClientState) => any;
+const connectAndSubscribe = (
+  serverUrl: string,
+  handleChange: (clientState: ClientState) => any
+): ClientAndSubscription => {
+  const chatClient = ChatClient.connect(serverUrl);
+  const subscription = chatClient.stateChanges.subscribe(handleChange);
+  return {
+    chatClient,
+    subscription
+  };
+};
+
+const disconnectAndUnsubscribe = (
+  clientAndSubscription: ClientAndSubscription
+): void => {
+  clientAndSubscription.chatClient.disconnect();
+  clientAndSubscription.subscription.unsubscribe();
+};
+
+interface Props {
+  render?: (
+    clientState: ClientState,
+    login: (userName: string) => any,
+    sendText: (text: string) => any
+  ) => React.ReactNode;
+  serverUrl?: string;
 }
+
+type State = Props & {
+  clientState?: ClientState;
+  handleChange: (state: ClientState) => any;
+  clientAndSubscription?: ClientAndSubscription;
+};
 
 export class ChatDataSource extends React.PureComponent<Props, State> {
   state: State = {
-    handleChange: (state: ClientState) => {
-      if (this.props.onChange) {
-        this.props.onChange(state);
+    handleChange: (clientState: ClientState) => {
+      if (this.props.render && this.state.clientAndSubscription) {
+        this.setState({ clientState });
       }
     }
   };
@@ -31,29 +57,15 @@ export class ChatDataSource extends React.PureComponent<Props, State> {
     const nextState = { ...prevState, ...nextProps };
 
     if (nextProps.serverUrl !== prevState.serverUrl) {
-      if (prevState.chatClient) {
-        prevState.chatClient.disconnect();
-      }
-
-      if (prevState.subscription) {
-        prevState.subscription.unsubscribe();
+      if (prevState.clientAndSubscription) {
+        disconnectAndUnsubscribe(prevState.clientAndSubscription);
       }
 
       if (nextProps.serverUrl) {
-        nextState.chatClient = ChatClient.connect(nextProps.serverUrl);
-        nextState.subscription = nextState.chatClient.stateChanges.subscribe(
+        nextState.clientAndSubscription = connectAndSubscribe(
+          nextProps.serverUrl,
           nextState.handleChange
         );
-      }
-    }
-
-    if (nextProps.userName !== prevState.userName && nextState.chatClient) {
-      if (prevState.userName) {
-        nextState.chatClient.logout();
-      }
-
-      if (nextProps.userName) {
-        nextState.chatClient.tryLogin(nextProps.userName);
       }
     }
 
@@ -61,16 +73,22 @@ export class ChatDataSource extends React.PureComponent<Props, State> {
   }
 
   render() {
-    return null;
+    const cc = this.state.clientAndSubscription;
+    const result =
+      this.props.render && this.state.clientState && cc
+        ? this.props.render(
+            this.state.clientState,
+            x => cc.chatClient.tryLogin(x),
+            x => cc.chatClient.sendText(x)
+          )
+        : null;
+
+    return result;
   }
 
   componentWillUnmount() {
-    if (this.state.chatClient) {
-      this.state.chatClient.disconnect();
-    }
-
-    if (this.state.subscription) {
-      this.state.subscription.unsubscribe();
+    if (this.state.clientAndSubscription) {
+      disconnectAndUnsubscribe(this.state.clientAndSubscription);
     }
   }
 }
