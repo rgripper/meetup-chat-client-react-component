@@ -1,4 +1,4 @@
-import { PureComponent } from 'react';
+import { createElement, PureComponent } from 'react';
 import { ChatClient } from 'meetup-chat-client';
 
 /*! *****************************************************************************
@@ -76,13 +76,21 @@ var ChatDataSource = /** @class */ (function (_super) {
                 nextState.clientAndSubscription = connectAndSubscribe(nextProps.serverUrl, nextState.handleChange);
             }
         }
+        if (nextProps.userName !== prevState.userName) {
+            if (prevState.clientAndSubscription && prevState.userName) {
+                prevState.clientAndSubscription.chatClient.logout();
+            }
+            if (nextState.clientAndSubscription && nextProps.userName) {
+                nextState.clientAndSubscription.chatClient.tryLogin(nextProps.userName);
+            }
+        }
         return nextState;
     };
     ChatDataSource.prototype.render = function () {
         var cc = this.state.clientAndSubscription;
-        var result = this.props.render && this.state.clientState && cc
-            ? this.props.render(this.state.clientState, function (x) { return cc.chatClient.tryLogin(x); }, function (x) { return cc.chatClient.sendText(x); })
-            : null;
+        var result = this.state.clientState &&
+            cc &&
+            (this.props.render ? (this.props.render(this.state.clientState, cc.chatClient.sendText, cc.chatClient.tryLogin)) : this.props.component ? (createElement(this.props.component, { clientState: this.state.clientState, login: cc.chatClient.tryLogin, sendText: cc.chatClient.sendText })) : null) || null;
         return result;
     };
     ChatDataSource.prototype.componentWillUnmount = function () {

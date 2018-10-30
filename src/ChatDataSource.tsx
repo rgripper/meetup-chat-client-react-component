@@ -26,13 +26,21 @@ const disconnectAndUnsubscribe = (
   clientAndSubscription.subscription.unsubscribe();
 };
 
+interface InnerComponentProps {
+  clientState: ClientState;
+  login: (userName: string) => any;
+  sendText: (text: string) => any;
+}
+
 interface Props {
   render?: (
     clientState: ClientState,
     login: (userName: string) => any,
     sendText: (text: string) => any
   ) => React.ReactNode;
+  component?: React.ComponentType<InnerComponentProps>;
   serverUrl?: string;
+  userName?: string;
 }
 
 type State = Props & {
@@ -69,19 +77,37 @@ export class ChatDataSource extends React.PureComponent<Props, State> {
       }
     }
 
+    if (nextProps.userName !== prevState.userName) {
+      if (prevState.clientAndSubscription && prevState.userName) {
+        prevState.clientAndSubscription.chatClient.logout();
+      }
+
+      if (nextState.clientAndSubscription && nextProps.userName) {
+        nextState.clientAndSubscription.chatClient.tryLogin(nextProps.userName);
+      }
+    }
+
     return nextState;
   }
 
   render() {
     const cc = this.state.clientAndSubscription;
     const result =
-      this.props.render && this.state.clientState && cc
-        ? this.props.render(
-            this.state.clientState,
-            x => cc.chatClient.tryLogin(x),
-            x => cc.chatClient.sendText(x)
-          )
-        : null;
+      this.state.clientState &&
+      cc &&
+      (this.props.render ? (
+        this.props.render(
+          this.state.clientState,
+          cc.chatClient.sendText,
+          cc.chatClient.tryLogin
+        )
+      ) : this.props.component ? (
+        <this.props.component
+          clientState={this.state.clientState}
+          login={cc.chatClient.tryLogin}
+          sendText={cc.chatClient.sendText}
+        />
+      ) : null) || null;
 
     return result;
   }

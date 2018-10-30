@@ -5,9 +5,16 @@ interface ClientAndSubscription {
     chatClient: ChatClient;
     subscription: Subscription;
 }
+interface InnerComponentProps {
+    clientState: ClientState;
+    login: (userName: string) => any;
+    sendText: (text: string) => any;
+}
 interface Props {
     render?: (clientState: ClientState, login: (userName: string) => any, sendText: (text: string) => any) => React.ReactNode;
+    component?: React.ComponentType<InnerComponentProps>;
     serverUrl?: string;
+    userName?: string;
 }
 declare type State = Props & {
     clientState?: ClientState;
@@ -17,7 +24,7 @@ declare type State = Props & {
 export declare class ChatDataSource extends React.PureComponent<Props, State> {
     state: State;
     static getDerivedStateFromProps(nextProps: Props, prevState: State): Partial<State> | null;
-    render(): {} | null | undefined;
+    render(): {} | null;
     componentWillUnmount(): void;
 }
 export {};
