@@ -12,19 +12,16 @@ interface InnerComponentProps {
 }
 interface Props {
     render?: (clientState: ClientState, login: (userName: string) => any, sendText: (text: string) => any) => React.ReactNode;
-    component?: React.ComponentType<InnerComponentProps>;
+    component: React.ComponentType<InnerComponentProps>;
     serverUrl?: string;
     userName?: string;
 }
 declare type State = Props & {
     clientState?: ClientState;
-    handleChange: (state: ClientState) => any;
+    chatClient?: ChatClient;
     clientAndSubscription?: ClientAndSubscription;
 };
 export declare class ChatDataSource extends React.PureComponent<Props, State> {
-    state: State;
-    static getDerivedStateFromProps(nextProps: Props, prevState: State): Partial<State> | null;
-    render(): {} | null;
-    componentWillUnmount(): void;
+    render(): JSX.Element | null;
 }
 export {};

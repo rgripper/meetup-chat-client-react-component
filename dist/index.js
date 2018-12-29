@@ -1,4 +1,4 @@
-import { createElement, PureComponent } from 'react';
+import { useState, useEffect, createElement, PureComponent } from 'react';
 import { ChatClient } from 'meetup-chat-client';
 
 /*! *****************************************************************************
@@ -30,73 +30,31 @@ function __extends(d, b) {
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 }
 
-var __assign = function() {
-    __assign = Object.assign || function __assign(t) {
-        for (var s, i = 1, n = arguments.length; i < n; i++) {
-            s = arguments[i];
-            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p)) t[p] = s[p];
-        }
-        return t;
-    };
-    return __assign.apply(this, arguments);
-};
-
-var connectAndSubscribe = function (serverUrl, handleChange) {
+var connectAndSubscribe = function (serverUrl, setChatClient, handleChange) {
     var chatClient = ChatClient.connect(serverUrl);
+    setChatClient(chatClient);
     var subscription = chatClient.stateChanges.subscribe(handleChange);
-    return {
-        chatClient: chatClient,
-        subscription: subscription
+    return function () {
+        chatClient.disconnect();
+        subscription.unsubscribe();
     };
-};
-var disconnectAndUnsubscribe = function (clientAndSubscription) {
-    clientAndSubscription.chatClient.disconnect();
-    clientAndSubscription.subscription.unsubscribe();
 };
 var ChatDataSource = /** @class */ (function (_super) {
     __extends(ChatDataSource, _super);
     function ChatDataSource() {
-        var _this = _super !== null && _super.apply(this, arguments) || this;
-        _this.state = {
-            handleChange: function (clientState) {
-                if (_this.props.render && _this.state.clientAndSubscription) {
-                    _this.setState({ clientState: clientState });
-                }
-            }
-        };
-        return _this;
+        return _super !== null && _super.apply(this, arguments) || this;
     }
-    ChatDataSource.getDerivedStateFromProps = function (nextProps, prevState) {
-        var nextState = __assign({}, prevState, nextProps);
-        if (nextProps.serverUrl !== prevState.serverUrl) {
-            if (prevState.clientAndSubscription) {
-                disconnectAndUnsubscribe(prevState.clientAndSubscription);
-            }
-            if (nextProps.serverUrl) {
-                nextState.clientAndSubscription = connectAndSubscribe(nextProps.serverUrl, nextState.handleChange);
-            }
-        }
-        if (nextProps.userName !== prevState.userName) {
-            if (prevState.clientAndSubscription && prevState.userName) {
-                prevState.clientAndSubscription.chatClient.logout();
-            }
-            if (nextState.clientAndSubscription && nextProps.userName) {
-                nextState.clientAndSubscription.chatClient.tryLogin(nextProps.userName);
-            }
-        }
-        return nextState;
-    };
     ChatDataSource.prototype.render = function () {
-        var cc = this.state.clientAndSubscription;
-        var result = this.state.clientState &&
-            cc &&
-            (this.props.render ? (this.props.render(this.state.clientState, cc.chatClient.sendText, cc.chatClient.tryLogin)) : this.props.component ? (createElement(this.props.component, { clientState: this.state.clientState, login: cc.chatClient.tryLogin, sendText: cc.chatClient.sendText })) : null) || null;
-        return result;
-    };
-    ChatDataSource.prototype.componentWillUnmount = function () {
-        if (this.state.clientAndSubscription) {
-            disconnectAndUnsubscribe(this.state.clientAndSubscription);
+        var _a = this.props, component = _a.component, serverUrl = _a.serverUrl, userName = _a.userName;
+        var _b = useState(undefined), clientState = _b[0], setClientState = _b[1];
+        var _c = useState(undefined), chatClient = _c[0], setChatClient = _c[1];
+        if (serverUrl) {
+            useEffect(function () { return connectAndSubscribe(serverUrl, setChatClient, setClientState); }, [serverUrl, component, serverUrl, userName]);
         }
+        if (!clientState || !chatClient) {
+            return null;
+        }
+        return (createElement(this.props.component, { clientState: clientState, login: chatClient.tryLogin, sendText: chatClient.sendText }));
     };
     return ChatDataSource;
 }(PureComponent));
