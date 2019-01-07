@@ -1,5 +1,5 @@
 import * as React from "react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, SFC } from "react";
 import { ChatClient, ClientState } from "meetup-chat-client";
 import { Subscription } from "rxjs";
 
@@ -15,14 +15,16 @@ const connectAndSubscribe = (
 ) => {
   const chatClient = ChatClient.connect(serverUrl);
   setChatClient(chatClient);
-  const subscription = chatClient.stateChanges.subscribe(handleChange);
+  console.log('connecting...');
+  const subscription = chatClient.stateChanges.subscribe((d) => { console.log(d); handleChange(d) });
   return () => {
+    console.log('disconnecting1');
     chatClient.disconnect();
     subscription.unsubscribe();
   };
 };
 
-interface InnerComponentProps {
+export interface InnerComponentProps {
   clientState: ClientState;
   login: (userName: string) => any;
   sendText: (text: string) => any;
@@ -45,33 +47,31 @@ type State = Props & {
   clientAndSubscription?: ClientAndSubscription;
 };
 
-export class ChatDataSource extends React.PureComponent<Props, State> {
-  render() {
-    const { component, serverUrl, userName } = this.props;
-    const [clientState, setClientState] = useState<ClientState | undefined>(
-      undefined
-    );
-    const [chatClient, setChatClient] = useState<ChatClient | undefined>(
-      undefined
-    );
+export const ChatDataSource: SFC<Props> = (props) => {
+  const { component, serverUrl, userName } = props;
+  const [clientState, setClientState] = useState<ClientState | undefined>(
+    undefined
+  );
+  const [chatClient, setChatClient] = useState<ChatClient | undefined>(
+    undefined
+  );
 
-    if (serverUrl) {
-      useEffect(
-        () => connectAndSubscribe(serverUrl, setChatClient, setClientState),
-        [serverUrl, component, serverUrl, userName]
-      );
-    }
-
-    if (!clientState || !chatClient) {
-      return null;
-    }
-
-    return (
-      <this.props.component
-        clientState={clientState}
-        login={chatClient.tryLogin}
-        sendText={chatClient.sendText}
-      />
+  if (serverUrl) {
+    useEffect(
+      () => connectAndSubscribe(serverUrl, setChatClient, setClientState),
+      [serverUrl, component, serverUrl, userName]
     );
   }
+  
+  if (!clientState || !chatClient) {
+    return null;
+  }
+
+  return (
+    <props.component
+      clientState={clientState}
+      login={chatClient.tryLogin}
+      sendText={chatClient.sendText}
+    />
+  );
 }
