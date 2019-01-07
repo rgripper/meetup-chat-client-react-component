@@ -1,6 +1,6 @@
 {
   "name": "meetup-chat-client-react-component",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "main": "dist/index.js",
   "repository": "https://github.com/rgripper/meetup-chat-client-react-component",
   "files": [
