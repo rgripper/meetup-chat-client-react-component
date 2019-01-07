@@ -10,12 +10,16 @@ interface ClientAndSubscription {
 
 const connectAndSubscribe = (
   serverUrl: string,
+  userName: string | undefined,
   setChatClient: (chatClient: ChatClient) => any,
   handleChange: (clientState: ClientState) => any
 ) => {
   const chatClient = ChatClient.connect(serverUrl);
   setChatClient(chatClient);
-  const subscription = chatClient.stateChanges.subscribe((d) => { console.log(d); handleChange(d) });
+  if (userName) {
+    chatClient.tryLogin(userName);
+  }
+  const subscription = chatClient.stateChanges.subscribe(handleChange);
   return () => {
     chatClient.disconnect();
     subscription.unsubscribe();
@@ -56,11 +60,11 @@ export const ChatDataSource: SFC<Props> = (props) => {
 
   if (serverUrl) {
     useEffect(
-      () => connectAndSubscribe(serverUrl, setChatClient, setClientState),
+      () => connectAndSubscribe(serverUrl, userName, setChatClient, setClientState),
       [serverUrl, component, serverUrl, userName]
     );
   }
-  
+
   if (!clientState || !chatClient) {
     return null;
   }

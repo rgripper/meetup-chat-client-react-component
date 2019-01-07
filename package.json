@@ -1,6 +1,6 @@
 {
   "name": "meetup-chat-client-react-component",
-  "version": "2.2.0",
+  "version": "2.3.0",
   "main": "dist/index.js",
   "repository": "https://github.com/rgripper/meetup-chat-client-react-component",
   "files": [
@@ -10,7 +10,7 @@
   "license": "MIT",
   "scripts": {
     "ts-jest": "ts-jest",
-    "prepublish": "build",
+    "prepublish": "yarn build",
     "build": "rollup --config=config/rollup.config.js",
     "test": "jest --config=config/jest.config.js"
   },
