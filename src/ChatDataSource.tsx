@@ -15,10 +15,8 @@ const connectAndSubscribe = (
 ) => {
   const chatClient = ChatClient.connect(serverUrl);
   setChatClient(chatClient);
-  console.log('connecting...');
   const subscription = chatClient.stateChanges.subscribe((d) => { console.log(d); handleChange(d) });
   return () => {
-    console.log('disconnecting1');
     chatClient.disconnect();
     subscription.unsubscribe();
   };

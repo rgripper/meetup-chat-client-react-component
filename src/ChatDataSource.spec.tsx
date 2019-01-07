@@ -7,15 +7,15 @@ describe("<ChatDataSource />", () => {
   const serverUrl = "http://localhost:35558";
 
   it("should connect and call onChange", done => {
-    const component: SFC<InnerComponentProps> = props => (
+    const Component: SFC<InnerComponentProps> = props => (
       <div>{props.clientState.chat.isAuthenticated.toString()}</div>
     );
-    const renderedElement = mount(<ChatDataSource serverUrl={serverUrl} component={component} />);
+    const renderedElement = mount(<ChatDataSource serverUrl={serverUrl} component={Component} />);
 
     setTimeout(() => {
       renderedElement.update();
       expect(renderedElement.html()).toBe('<div>false</div>');
-      const innerProps = renderedElement.find(component).props();
+      const innerProps = renderedElement.find(Component).props();
       expect(innerProps).toMatchObject({
         clientState: {
           socket: { isConnected: true, isConnecting: false },

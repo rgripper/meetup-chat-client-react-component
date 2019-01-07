@@ -1,11 +1,7 @@
 import * as React from "react";
-import { ChatClient, ClientState } from "meetup-chat-client";
-import { Subscription } from "rxjs";
-interface ClientAndSubscription {
-    chatClient: ChatClient;
-    subscription: Subscription;
-}
-interface InnerComponentProps {
+import { SFC } from "react";
+import { ClientState } from "meetup-chat-client";
+export interface InnerComponentProps {
     clientState: ClientState;
     login: (userName: string) => any;
     sendText: (text: string) => any;
@@ -16,12 +12,5 @@ interface Props {
     serverUrl?: string;
     userName?: string;
 }
-declare type State = Props & {
-    clientState?: ClientState;
-    chatClient?: ChatClient;
-    clientAndSubscription?: ClientAndSubscription;
-};
-export declare class ChatDataSource extends React.PureComponent<Props, State> {
-    render(): JSX.Element | null;
-}
+export declare const ChatDataSource: SFC<Props>;
 export {};
